@@ -1,3 +1,5 @@
+package utils;
+
 import java.io.*;
 import java.util.*;
 public class EvalUtils {
@@ -96,6 +98,31 @@ public class EvalUtils {
         reader.close();
         return queries;
     }
+    public static HashMap<String, ArrayList<String>> loadResults( String f ) throws IOException {
+        return loadResults( new File( f ) );
+    }
+
+    public static HashMap<String, ArrayList<String>> loadResults(File f) {
+        try {
+            HashMap<String, ArrayList<String>> results = new HashMap<String, ArrayList<String>>();
+            BufferedReader reader = new BufferedReader( new InputStreamReader( new FileInputStream( f ), "UTF-8" ) );
+            String line;
+            while ( ( line = reader.readLine() ) != null ) {
+                String[] splits = line.split( " " );
+                String qid = splits[ 0 ];
+                String result = splits[ 1 ];
+                ArrayList<String> r = results.getOrDefault(qid, new ArrayList<String>());
+                r.add(result);
+                results.put(qid, r);
+            }
+            reader.close();
+            return results;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     /**
      * given the ranking of of a model for all queries, find the results which matter the most to the scores of this ranking for each query
@@ -112,12 +139,16 @@ public class EvalUtils {
             this.score = score;
         }
     }
+    /**
+     * takes a ranking of results for a query, along with relevance data for the query,
+     * and returns a ranking of which k results contribute most to the AP score.
+     */
     public static ArrayList<String> findTopResults(ArrayList<String> results,  Map<String, Integer> qrel ,int top, int k) {
         ArrayList<String> finalrank = new ArrayList<>();
         PriorityQueue<Result> pq = new PriorityQueue(50, new Comparator<Result>() {
             @Override
             public int compare(Result o1, Result o2) {
-                if (o1.score > o2.score){
+                if (o1.score < o2.score){
                     return 1;
                 }
                 else if (o2.score == o1.score){
@@ -132,8 +163,9 @@ public class EvalUtils {
         double AP = Metrics.avgPrec(results, qrel, top);
         for (int i = 0; i < k; i++) {
            String removed = results.remove(i);
-           double APnew = Metrics.avgPrec(results, qrel, k);
+           double APnew = Metrics.avgPrec(results, qrel, top);
            double deltaAP = AP - APnew;
+            System.out.println(removed+" "+AP+" "+APnew+" "+qrel.get(removed));
            Result r = new Result(removed, deltaAP);
            if(pq.size() < k){
                pq.add(r);
@@ -154,4 +186,24 @@ public class EvalUtils {
 
     }
 
+}
+class Driver {
+    public static void main(String[] args) {
+
+        String dirpath = "/Users/dhruva/Desktop/ISR/final_project/explainable-results";
+        String pathqrels = dirpath+"/qrels_robust04";
+        String pathqueries = dirpath+"/queries_robust04";
+        String pathresults = dirpath+"/src/java/results.txt";
+
+        try {
+            Map<String, Map<String, Integer>> qrels = EvalUtils.loadQrels(pathqrels);
+            Map<String, String> queries = EvalUtils.loadQueries(pathqueries);
+            HashMap<String, ArrayList<String>> results = EvalUtils.loadResults(pathresults);
+//            System.out.println(results.get("301"));
+            ArrayList<String> finalrank = EvalUtils.findTopResults(results.get("301"), qrels.get("301"), 1000, 25);
+            System.out.println(finalrank);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

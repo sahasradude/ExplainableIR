@@ -1,6 +1,12 @@
 import sys
 import lime
 
+
+# load a couple of models, run lime on both for the top instances, and then see what the explanations are for those instances
+# how to define "top instances" : 1) make a ranking of which results contribute most to the MAP, NDCG@k, etc.
+# what I need for this: qrels, rankings of both models, then compute metrics, then go one by one through results, find the change in metric after removing a result, then get instances, run lime on them.
+
+
 class Pred:
     def __init__(self):
         self.corpus = None

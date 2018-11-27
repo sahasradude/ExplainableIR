@@ -41,8 +41,41 @@ class Pred:
         self.kthrank = k
         return
 
-    def predict_proba(self):
+    def read_mapped_file():
+        a = dict()
+        with open("relation.txt", "r+") as f:
+            for line in f.readlines():
+                splitline = line.split(" ")
+                if splitline[1] not in a:
+                    a[splitline[1]] = list()
+                a[splitline[1]].append(splitline[2])
+        
+        corpus = dict()
+        with open("corpus.txt", "r+") as f:
+            for line in f.readlines():
+                splitline = line.split(" ")
+                corpus[splitline[0]] = " ".join(splitline[1:])
+
+        for query in a:
+            for doc in a[query]:
+                document_text = corpus[doc]
+                lime(document_text, predict_proba(doc, query), )
+
+            
+
+        self.topscore = scorelist[0]
+        self.kthscore = scorelist[k]
+        self.corpus = list(zip([namelist, textlist, scorelist]))
+        self.kthrank = k
         return
+
+    def predict_proba(doc, query):
+        with open("predict.test.drmm.Testing.txt", "r+") as f:
+            for line in f.readlines():
+                splitline = line.split(" ")
+                if splitline[0] == query and split[2] == doc:
+                    return (splitline[3],splitline[4])
+        return (-1,-1)
 
     def lime_func(self):
         return
